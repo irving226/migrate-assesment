@@ -32,8 +32,6 @@ export const TAGS = [
   
   export type StoryType = "top" | "new" | "best" | "ask" | "show" | "job";
   
-  // The shape we hand the client. A normalized subset of HN's raw item, plus
-  // our derived tags. Keeping this narrow means the UI never sees HN's quirks.
   export interface Story {
     id: number;
     title: string;
@@ -41,16 +39,15 @@ export const TAGS = [
     domain: string | null;
     by: string;
     score: number;
-    descendants: number; // total comment count
-    time: number; // unix seconds
+    descendants: number;
+    time: number; 
     kids?: number[];
     type: string;
-    text?: string | null; // present on Ask HN / self-posts
+    text?: string | null; 
     tags: Tag[];
   }
   
-  // Raw HN item — only the fields we actually read. Everything else is ignored
-  // per the API's "gracefully handle additional fields" guidance.
+  
   export interface HNItem {
     id: number;
     deleted?: boolean;

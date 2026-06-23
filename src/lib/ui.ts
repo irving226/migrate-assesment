@@ -1,8 +1,6 @@
 import type { Tag } from "@/lib/types";
 
-// Display metadata for tags: short label + the CSS var holding its hue.
-// The CSS vars live in globals.css; keeping the mapping here means components
-// never hardcode colors.
+
 export const TAG_META: Record<Tag, { label: string; cssVar: string }> = {
   ai_ml: { label: "ai/ml", cssVar: "--t-ai" },
   technical_deep_dive: { label: "deep dive", cssVar: "--t-tech" },
@@ -32,8 +30,6 @@ export function tempLabel(t: number): string {
   return t < 0.3 ? "calm" : t < 0.55 ? "warm" : t < 0.78 ? "spirited" : "blazing";
 }
 
-// Heat ramp: cool slate -> amber -> HN orange at blazing. Orange at the top
-// doubles as a quiet HN echo.
 export function tempColor(t: number): string {
   if (t < 0.3) return "#5d8a9e";
   if (t < 0.55) return "#c6a35a";

@@ -1,6 +1,7 @@
 import type { Story } from "@/lib/types";
 import { TAG_META, SIGNAL_DOMAINS, timeAgo } from "@/lib/ui";
 import { TemperatureGauge } from "./TemperatureGauge";
+import { Tooltip } from "./Tooltip";
 
 interface Props {
   story: Story;
@@ -11,6 +12,16 @@ interface Props {
 
 export function StoryRow({ story, index, selected, onSelect }: Props) {
   const isSignal = story.domain ? SIGNAL_DOMAINS.has(story.domain) : false;
+
+  const domainEl = (
+    <span
+      className={`domain mono${isSignal ? " signal" : ""}`}
+      style={isSignal ? { cursor: "help" } : undefined}
+    >
+      {story.domain ?? "self.hn"}
+    </span>
+  );
+
   return (
     <button
       className={`row${selected ? " sel" : ""}`}
@@ -21,9 +32,14 @@ export function StoryRow({ story, index, selected, onSelect }: Props) {
       <span className="rmain">
         <span className="rtitle">{story.title}</span>
         <span className="rmeta">
-          <span className={`domain mono${isSignal ? " signal" : ""}`}>
-            {story.domain ?? "self.hn"}
-          </span>
+          {isSignal ? (
+            <Tooltip content="High-signal domain (trusted technical source)">
+              {domainEl}
+            </Tooltip>
+          ) : (
+            domainEl
+          )}
+
           <span className="domain mono" style={{ color: "var(--dim-2)" }}>
             · {story.by} · {timeAgo(story.time)}
           </span>

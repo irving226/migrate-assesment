@@ -25,13 +25,11 @@ export async function getItem(id: number): Promise<HNItem | null> {
   return getJSON<HNItem | null>(`item/${id}`);
 }
 
-// Returns the ordered list of story IDs for a given feed.
 export async function getStoryIds(type: StoryType): Promise<number[]> {
   return getJSON<number[]>(LIST_ENDPOINT[type]);
 }
 
-// Normalize a raw HN item into our Story shape. Tags start as whatever the
-// domain table can infer for free; the LLM fills the rest in downstream.
+
 function toStory(item: HNItem): Story {
   const domain = extractDomain(item.url);
   return {
@@ -50,9 +48,7 @@ function toStory(item: HNItem): Story {
   };
 }
 
-// Fetch a page of stories for a feed. We slice the ID list to `limit` BEFORE
-// fetching items, so we only ever load the page the user actually sees —
-// HN returns up to 500 IDs and we are not going to fetch 500 items.
+
 export async function getStories(
   type: StoryType,
   page = 0,
@@ -66,10 +62,7 @@ export async function getStories(
     .map(toStory);
 }
 
-// Pull the top N comments for summarization. We walk only the top-level kids
-// (ranked order is preserved by HN) and take their text — no deep recursion,
-// because a flat sample of the highest-ranked comments is plenty of signal
-// for a discussion summary and keeps the fetch bounded.
+// Pull the top N comments for summarization
 export async function getTopComments(
   storyId: number,
   limit = 15

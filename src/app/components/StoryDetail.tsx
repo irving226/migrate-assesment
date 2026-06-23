@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Story } from "@/lib/types";
 import { fetchComments, fetchSummary } from "@/lib/api";
 import { tempColor, temperature, tempLabel, timeAgo } from "@/lib/ui";
+import { Tooltip } from "./Tooltip";
 
 function htmlToText(html: string): string {
   if (typeof document === "undefined") return html;
@@ -22,14 +23,12 @@ export function StoryDetail({
   const t = temperature(story.score, story.descendants);
   const heat = tempColor(t);
 
-  // Comments load automatically when a story is opened.
   const comments = useQuery({
     queryKey: ["comments", story.id],
     queryFn: () => fetchComments(story.id),
     staleTime: 5 * 60 * 1000,
   });
 
-  // Summary is on-demand — the expensive LLM call only fires on click.
   const summary = useMutation({
     mutationFn: () => fetchSummary(story.id),
   });
@@ -41,6 +40,13 @@ export function StoryDetail({
       ? "show hn"
       : "story";
 
+  const kickerTooltip =
+    kicker === "ask hn"
+      ? "Community Q&A / Text Post"
+      : kicker === "show hn"
+      ? "A project built by the community"
+      : null;
+
   return (
     <div className="detail">
       <div className="dt-inner">
@@ -51,8 +57,19 @@ export function StoryDetail({
         >
           ✕
         </button>
-        <div className="dt-kicker">{kicker}</div>
+
+        {kickerTooltip ? (
+          <Tooltip content={kickerTooltip}>
+            <div className="dt-kicker" style={{ cursor: "help" }}>
+              {kicker}
+            </div>
+          </Tooltip>
+        ) : (
+          <div className="dt-kicker">{kicker}</div>
+        )}
+
         <h2 className="dt-title">{story.title}</h2>
+
         <div className="dt-meta">
           <span>
             <b>{story.score}</b> points
@@ -64,7 +81,12 @@ export function StoryDetail({
             by <b>{story.by}</b>
           </span>
           <span>{timeAgo(story.time)} ago</span>
-          <span style={{ color: heat }}>● {tempLabel(t)} thread</span>
+
+          <Tooltip content="Heat indicates how intensely this post is being debated based on the comment-to-points ratio.">
+            <span style={{ color: heat, cursor: "help" }}>
+              ● {tempLabel(t)} thread
+            </span>
+          </Tooltip>
         </div>
 
         {story.url && (
@@ -90,9 +112,11 @@ export function StoryDetail({
             ) : summary.data ? (
               summary.data.summary
             ) : (
-              <button className="gen-btn" onClick={() => summary.mutate()}>
-                ✦ generate summary
-              </button>
+              <Tooltip content="Use AI to read all comments and generate a brief recap">
+                <button className="gen-btn" onClick={() => summary.mutate()}>
+                  ✦ generate summary
+                </button>
+              </Tooltip>
             )}
           </div>
         </div>

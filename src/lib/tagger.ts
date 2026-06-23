@@ -5,13 +5,10 @@ import { supabaseAdmin } from "./supabase/supabase";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = "gpt-4o-mini";
-const BATCH_SIZE = 10; // stories per OpenAI call — ~10x fewer round-trips
+const BATCH_SIZE = 10; 
 
 const TAG_SET = new Set<string>(TAGS);
 
-// Coerce whatever the model returns into valid tags only. The model can
-// hallucinate a tag that isn't in our taxonomy; we silently drop those rather
-// than trust it. Empty result is fine — "other" by omission.
 function sanitize(raw: unknown): Tag[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter((t): t is Tag => typeof t === "string" && TAG_SET.has(t));

@@ -8,8 +8,14 @@ import { TAG_META } from "@/lib/ui";
 import { fetchStories, fetchWeights } from "@/lib/api";
 import { StoryRow } from "./StoryRow";
 import { StoryDetail } from "./StoryDetail";
+import { Tooltip } from "./Tooltip";
 
 const FEEDS: StoryType[] = ["top", "new", "best", "ask", "show"];
+
+const FEED_TOOLTIPS: Partial<Record<StoryType, string>> = {
+  ask: "Ask HN: Text posts asking the community questions",
+  show: "Show HN: Builders sharing their own projects/launches",
+};
 
 export function FeedView() {
   const [feed, setFeed] = useState<StoryType>("top");
@@ -19,16 +25,12 @@ export function FeedView() {
   const [selected, setSelected] = useState<number | null>(null);
   const [queryText, setQueryText] = useState("");
 
-  // Stories for the current feed. TanStack Query caches per feed, so switching
-  // tabs back and forth doesn't refetch.
   const stories = useQuery({
     queryKey: ["stories", feed],
     queryFn: () => fetchStories(feed),
     staleTime: 60 * 1000,
   });
 
-  // NL search -> weights. On success we store the weights; ranking happens
-  // locally below (no per-story LLM cost).
   const search = useMutation({
     mutationFn: (q: string) => fetchWeights(q),
     onSuccess: (data) => {
@@ -37,7 +39,6 @@ export function FeedView() {
     },
   });
 
-  // Apply chip filter, then weighted ranking — both pure client-side.
   const visible = useMemo(() => {
     let rows = stories.data ?? [];
     if (activeTags.size) {
@@ -75,30 +76,49 @@ export function FeedView() {
           </span>
           <span className="sub">signal reader</span>
         </div>
+
         <div className="feeds">
-          {FEEDS.map((f) => (
-            <button
-              key={f}
-              className={`feed-btn${feed === f ? " on" : ""}`}
-              onClick={() => setFeed(f)}
-            >
-              {f}
-            </button>
-          ))}
+          {FEEDS.map((f) => {
+            const btn = (
+              <button
+                key={f}
+                className={`feed-btn${feed === f ? " on" : ""}`}
+                onClick={() => setFeed(f)}
+              >
+                {f}
+              </button>
+            );
+
+            return FEED_TOOLTIPS[f] ? (
+              <Tooltip key={f} content={FEED_TOOLTIPS[f]}>
+                {btn}
+              </Tooltip>
+            ) : (
+              btn
+            );
+          })}
         </div>
-        <div className="search-wrap">
-          <span className="si mono">⌕</span>
-          <input
-            className="nl"
-            placeholder="describe what you want — e.g. ai papers, nothing about funding"
-            value={queryText}
-            onChange={(e) => setQueryText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && queryText.trim())
-                search.mutate(queryText.trim());
-            }}
-          />
-        </div>
+
+        <Tooltip content="Type a natural language query to rank stories">
+          <div className="search-wrap">
+            <span className="si mono">{search.isPending ? "⏳" : "⌕"}</span>
+            <input
+              className="nl"
+              placeholder={
+                search.isPending
+                  ? "analyzing intent and ranking..."
+                  : "describe what you want — e.g. ai papers, nothing about funding"
+              }
+              value={queryText}
+              disabled={search.isPending}
+              onChange={(e) => setQueryText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && queryText.trim())
+                  search.mutate(queryText.trim());
+              }}
+            />
+          </div>
+        </Tooltip>
       </header>
 
       <div className="filterbar">
